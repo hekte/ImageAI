@@ -15,5 +15,11 @@ for filename in os.listdir(directory):
         # Construct the new file name
         new_filename = f"{date}_{filename}"
         
+        # Handle conflicts by appending a suffix
+        counter = 1
+        while os.path.exists(os.path.join(directory, new_filename)):
+            new_filename = f"{date}_{counter}_{filename}"
+            counter += 1
+        
         # Rename the file
         os.rename(os.path.join(directory, filename), os.path.join(directory, new_filename))
