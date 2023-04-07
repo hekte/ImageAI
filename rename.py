@@ -10,7 +10,7 @@ args = parser.parse_args()
 
 # Loop through all files in the directory
 for filename in os.listdir(args.directory):
-    if filename.endswith(".jpg"):
+    if filename.lower().endswith((".jpg", ".jpeg", ".png", ".gif")):
         
         # Open the image and get the original date and time from the EXIF metadata
         with Image.open(os.path.join(args.directory, filename)) as image:
@@ -25,12 +25,12 @@ for filename in os.listdir(args.directory):
                 date = datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d_%H%M%S')
         
         # Construct the new file name
-        new_filename = f"{date}.jpg"
+        new_filename = f"{date}{os.path.splitext(filename)[1]}"
         
         # Handle conflicts by appending a suffix
         counter = 1
         while os.path.exists(os.path.join(args.directory, new_filename)):
-            new_filename = f"{date}_{counter}.jpg"
+            new_filename = f"{date}_{counter}{os.path.splitext(filename)[1]}"
             counter += 1
         
         # Rename the file
