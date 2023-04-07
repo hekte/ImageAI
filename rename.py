@@ -6,6 +6,7 @@ import argparse
 # Set up command line argument parser
 parser = argparse.ArgumentParser()
 parser.add_argument("directory", help="the directory containing the photos")
+parser.add_argument("--suffix", help="an optional suffix to append to the new filename")
 args = parser.parse_args()
 
 # Initialize image counter
@@ -28,12 +29,13 @@ for index, filename in enumerate(os.listdir(args.directory)):
                 date = datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d_%H%M%S')
         
         # Construct the new file name
-        new_filename = f"{date}{os.path.splitext(filename)[1]}"
+        suffix = args.suffix if args.suffix else ""
+        new_filename = f"{date}{suffix}{os.path.splitext(filename)[1]}"
         
         # Handle conflicts by appending a suffix
         counter = 1
         while os.path.exists(os.path.join(args.directory, new_filename)):
-            new_filename = f"{date}_{counter}{os.path.splitext(filename)[1]}"
+            new_filename = f"{date}_{counter}{suffix}{os.path.splitext(filename)[1]}"
             counter += 1
         
         # Rename the file
