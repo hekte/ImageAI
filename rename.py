@@ -8,8 +8,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument("directory", help="the directory containing the photos")
 args = parser.parse_args()
 
+# Initialize image counter
+image_count = 0
+
 # Loop through all files in the directory
-for filename in os.listdir(args.directory):
+for index, filename in enumerate(os.listdir(args.directory)):
     if filename.lower().endswith((".jpg", ".jpeg", ".png", ".gif")):
         
         # Open the image and get the original date and time from the EXIF metadata
@@ -35,3 +38,9 @@ for filename in os.listdir(args.directory):
         
         # Rename the file
         os.rename(os.path.join(args.directory, filename), os.path.join(args.directory, new_filename))
+        
+        # Increment image count
+        image_count += 1
+        
+        # Print progress and image count
+        print(f"Processed {image_count} of {len([f for f in os.listdir(args.directory) if f.lower().endswith(('.jpg', '.jpeg', '.png', '.gif'))])} images. Renamed {filename} to {new_filename}")
