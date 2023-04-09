@@ -6,6 +6,8 @@ import filecmp
 import hashlib
 import piexif
 import shutil
+from skimage.metrics import structural_similarity as ssim
+import cv2
 
 # Set up command line argument parser
 parser = argparse.ArgumentParser()
@@ -77,22 +79,15 @@ def main():
                 exif_dict["0th"][piexif.ImageIFD.ImageDescription] = original_filename.encode("utf-8")
                 
                 try:
+                    # Convert the exif_dict to a byte array
                     exif_bytes = piexif.dump(exif_dict)
+                # If an error occurs, remove the exif_dict and convert it to a byte array
                 except ValueError as e:
-                    print(f"- Error: {e}. Invalid exif_dict: {exif_dict}")
+                    print(f"- Error: {e}")
+                    # Remove the exif_dict from the exif_dict
                     exif_dict = piexif.remove(exif_dict)
+                    # Convert the exif_dict to a byte array
                     exif_bytes = piexif.dump(exif_dict)
-            
-            # Construct the new file name
-            suffix = args.suffix if args.suffix else ""
-            new_filename = f"{date}{suffix}{os.path.splitext(filename)[1]}"
-            
-            # Handle conflicts by appending a suffix
-            counter = 1
-            while os.path.exists(os.path.join(args.directory, new_filename)):
-                new_filename = f"{date}_{counter}{suffix}{os.path.splitext(filename)[1]}"
-                counter += 1
-            
            
             # Construct the new file name and path
             suffix = args.suffix if args.suffix else ""
@@ -111,8 +106,10 @@ def main():
 
             # Write the original file name to the EXIF metadata of the new file
             with Image.open(new_file_path) as image:
-                image.save(new_file_path, exif=exif_bytes)
-
+                try:
+                    image.save(new_file_path, exif=exif_bytes)
+                except IOError:
+                    raise IOError(f"- Error: failed to write EXIF metadata to {new_file_path}")
             # Move the file to a new directory if specified
             if args.move:
                 output_path = os.path.join(args.move, new_filename)
@@ -126,16 +123,30 @@ def main():
                         print(f"- Stat match?: False")
                     if hash_file(new_file_path) == hash_file(output_path):
                         print(f"- Hash match?: True")
-                        raise FileExistsError(f"Identical file exists in output directory: {new_filename}")
+                        os.remove(new_file_path)
+                        print(f"- Removed identical source file {new_filename}")
+                        #raise FileExistsError(f"Identical file exists in output directory: {new_filename}")
                     else:
                         print(f"- Hash match?: False")
+                        try:
+                            src = cv2.cvtColor(cv2.imread(new_file_path), cv2.COLOR_BGR2GRAY)
+                            dst = cv2.cvtColor(cv2.imread(output_path), cv2.COLOR_BGR2GRAY)
+                            ss = ssim(src, dst)
+                            if ss == 1.0:
+                                print(f"- Structural similarity?: True")
+                                os.remove(new_file_path)
+                                print(f"- Removed identical source file {new_filename}")
+                            else:
+                                print(f"- Structural similarity: {ss}")
+                        except ValueError:
+                            print(f"- Structural Similarity: Not calculated")
                     #if filecmp.cmp(new_file_path, output_path, shallow=True):
                     #if hash_file(new_file_path) == hash_file(output_path):
                     #    print(f"- Removed identical source file {new_filename}")
                     #    os.remove(new_file_path)
                     #    return
                     #else:
-                    raise FileExistsError(f"Different file already exists in output directory: {new_filename}")
+                    
                 else:
                     os.rename(new_file_path, output_path)
                     print(f"- Moved {new_filename} to {args.move}")
