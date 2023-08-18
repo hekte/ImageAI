@@ -24,8 +24,12 @@ For example, if you have two photos taken on January 1st, 2023, you could name t
 
 Another approach is to add a letter or number suffix, such as "YYYY-MM-DD_filename-a.jpg" and "YYYY-MM-DD_filename-b.jpg". This can work well if you only have a few conflicting photos.
 
-It's important to be consistent with your naming conventions, even when resolving conflicts, to avoid confusion and make it easier to organize and find your photos in the future.
+etc...
 
-Prompt: Can you crate a python script which can be used to perform this?
+## Fuctions
 
-...
+- Iterate through a source directory and rename to the desired format
+- Handle duplicate filename by appending a suffix
+- Move files to a destination directory for further processing
+- Compare image metadata to detect and remove duplicates
+
