@@ -1,5 +1,5 @@
 # ImageAI
-An image (and movie) processor created with the help of AI tools such as [ChatGPT](https://chat.openai.com/) and [CodeGeeX](https://codegeex.cn/) developed in [Visual Studio Code](https://code.visualstudio.com/)
+An image (and movie) processor created with the help of AI tools such as [ChatGPT](https://chat.openai.com/) and [CodeGeeX](https://codegeex.cn/en-US) developed in [Visual Studio Code](https://code.visualstudio.com/)
 
 ## Background
 
