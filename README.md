@@ -7,9 +7,11 @@ Generic cloud storage platforms such as [Google Drive](https://drive.google.com/
 
 ## Solution
 
-After some research I have opted to purchase a personal network attached storage (NAS) device to store my photos. I have found that the [Synology](https://www.synology.com/) NAS devices are easy to use and have a great user interface.
+In the process of moving tens of thousands of photos from an expensive cloud platform I couldn't find an off the shelf tool which could assist the way I wanted. After some research I opted to purchase a personal network attached storage (NAS) device to store my photos. I have found that the [Synology](https://www.synology.com/) NAS devices are easy to use and have a great user interface. This device includes the [Synology Photos](https://www.synology.com/en-global/dsm/feature/photos) application which has some very useful features which results in total control and privacy for all my images.
 
-In the process of renaming, sorting, deduplicating and moving tens of thousands of photos from a cloud platform I couldn't find an off the shelf tool which could assist the way I wanted.
+The challenge remains how to rename, sort and deduplicate thousands of photos. I have opted to use a [Python](https://www.python.org) script to automate this process. Like many people I have photos from multiple devices over many years, digital cameras, social media, and mobile phones. The script will sort the photos into folders based on the date they were taken. It will also rename the photos to a standard format.
+
+## Artifical Intelligence
 
 To begin I asked ChatGPT the following;
 
@@ -62,11 +64,13 @@ In this script, the `os` module is used to access and manipulate files and direc
 
 You can modify the script to adjust the file name format or directory path to suit your needs. Additionally, you may want to add error handling or confirmation prompts to ensure that the script renames files correctly and safely.
 
-AI has also helped write much of this document you are now reading, as shown in this screenshot;
+AI is also helping to write the document you are now reading!
+
 ![AI](screenshot.png)
 
 ## Fuctions
 
+- Build an index database for all files in the photo library folder
 - Iterate through a source directory and rename to the desired format
 - Handle duplicate filename by appending a suffix
 - Move files to a destination directory for further processing
