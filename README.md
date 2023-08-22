@@ -1,5 +1,5 @@
 # ImageAI
-Python image processor created with the help of AI tools for example; ChatGPT and CodeGeeX
+An image (and movie) processor created with the help of AI tools such as [ChatGPT](https://chat.openai.com/) and [CodeGeeX](https://codegeex.cn/) developed in [Visual Studio Code](https://code.visualstudio.com/)
 
 ## Background
 
@@ -55,9 +55,7 @@ for filename in os.listdir(directory):
 In this script, the `os` module is used to access and manipulate files and directories, and the `datetime` module is used to format the date from the file's creation timestamp.
 
 You can modify the script to adjust the file name format or directory path to suit your needs. Additionally, you may want to add error handling or confirmation prompts to ensure that the script renames files correctly and safely.
-```
 
-etc...
 
 ## Fuctions
 
