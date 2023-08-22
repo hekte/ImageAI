@@ -17,6 +17,7 @@ parser.add_argument("--suffix", help="an optional suffix to append to the new fi
 parser.add_argument("--dedupe", action='store_true', help="an optional directory to dedupe photos")
 parser.add_argument("--compare", action='store_true', help="an optional suffix to compare files")
 parser.add_argument("--target", help="an optional suffix for the target directoy")
+parser.add_argument("--trash", help="an optional suffix for the trash directoy")
 args = parser.parse_args()
 
 
@@ -28,6 +29,18 @@ def is_image(filename):
 def is_video(filename):
     return filename.lower().endswith(".mp4")
 
+# function to check if an image was taken with a camera
+def is_camera(filename):
+    try:
+        exif_dict = piexif.load(filename)
+        if piexif.ImageIFD.Make in exif_dict['0th'] and piexif.ImageIFD.Model in exif_dict['0th']:
+            return True
+        else:
+            return False
+    except Exception as e:
+        print(f"Error loading EXIF data: {e}")
+        return False
+
 # Function to check and fix exif tags
 def check_exif(exif_dict):
     for tag in [41728, 41729]:
@@ -38,25 +51,54 @@ def check_exif(exif_dict):
             print(f"\033[33m\u25E6 INFO: {e}. Missing exif_dict tag\033[0m")
     return exif_dict
 
-def get_mp4_creation_time(filepath):
-    output = subprocess.check_output(['exiftool', '-CreateDate', '-b', filepath])
+def get_mp4_creation_time(filename):
+    output = subprocess.check_output(['exiftool', '-CreateDate', '-b', filename])
     return output.decode('utf-8').strip()
 
+# function to return the sha256 hash for a given file
 def hash_file(filename):
     # Open the file in binary mode
     with open(filename, 'rb') as f:
         # Create a SHA-256 hash object
         hasher = hashlib.sha256()
-
         # Loop over the file, feeding it into the hash object in chunks
         while True:
             chunk = f.read(4096)
             if not chunk:
                 break
             hasher.update(chunk)
-
         # Return the hexadecimal representation of the hash
         return hasher.hexdigest()
+
+# function to return the perceptual hash for an image https://www.hackerfactor.com/blog/?/archives/432-Looks-Like-It.html
+def perceptual_hash(filename):
+    try:
+        imread = cv2.cvtColor(cv2.imread(filename), cv2.IMREAD_IGNORE_ORIENTATION, cv2.COLOR_BGR2GRAY)
+        imhash = cv2.img_hash.pHash(imread) # 8-byte hash
+        perceptual_hash = int.from_bytes(imhash.tobytes(), byteorder='big', signed=False)
+        return perceptual_hash
+    except cv2.error as e:
+        print(e)
+
+def rotate_hash(filename):
+    try:
+        #imread = cv2.cvtColor(cv2.imread(filename), cv2.IMREAD_IGNORE_ORIENTATION, cv2.COLOR_BGR2GRAY)
+        src = cv2.imread(filename, cv2.IMREAD_IGNORE_ORIENTATION)
+        imread = cv2.rotate(src, cv2.ROTATE_90_CLOCKWISE)
+        imhash = cv2.img_hash.pHash(imread) # 8-byte hash
+        rotated_hash = int.from_bytes(imhash.tobytes(), byteorder='big', signed=False)
+        print(rotated_hash)
+        imread = cv2.rotate(src, cv2.ROTATE_180)
+        imhash = cv2.img_hash.pHash(imread) # 8-byte hash
+        rotated_hash = int.from_bytes(imhash.tobytes(), byteorder='big', signed=False)
+        print(rotated_hash)
+        imread = cv2.rotate(src, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        imhash = cv2.img_hash.pHash(imread) # 8-byte hash
+        rotated_hash = int.from_bytes(imhash.tobytes(), byteorder='big', signed=False)
+        print(rotated_hash)
+        return
+    except cv2.error as e:
+        print(e)
 
 def is_empty_string(s):
     return s.isspace()
@@ -67,11 +109,13 @@ def main():
     video_count = 0
     skip_count = 0
     dupe_count = 0
+    file_dict = {}
+    img_dict = {}
 
     # Loop through all files in the directory
     image_total = len([f for f in os.listdir(args.directory) if is_image(f)])
 
-    for index, filename in enumerate(os.listdir(args.directory)):    
+    for index, filename in enumerate(sorted(os.listdir(args.directory))):    
         if is_image(filename):
             # Increment image count
             image_count += 1
@@ -107,7 +151,42 @@ def main():
                                 print(e)
                                 print(f"\033[33m\u25E6 Structural Similarity: Not calculated\033[0m")
             elif args.dedupe:
-                print(f"\033[33m\u25E6 Filename: {filename}\033[0m")
+                # Create a dictionary to store hashes and corresponding file paths
+                #cv2_file = cv2.imread(filename, cv2.IMREAD_IGNORE_ORIENTATION)
+                #cv2_hash = cv2.img_hash.BlockMeanHash_create()
+                #cv2_hash = cv2_hash.compute(cv2_file)
+                #print(is_exif(filename))
+                if is_camera(filename):
+                    #print(f"\033[33m\u25E6 Exif: ✓ Camera: ✓ \033[0m")
+                    file_hash = hash_file(filename)
+                    img_hash = perceptual_hash(filename)
+                    print(img_hash)
+                    rotate_hash(filename)
+                    if file_hash in file_dict:
+                        dupe_count += 1
+                        print(f"\033[33m\u25E6 File hash found: {filename} and {file_dict[file_hash]}")
+                    else:
+                        file_dict[file_hash] = filename
+                    if img_hash in img_dict:
+                        dupe_count += 1
+                        print(f"\033[33m\u25E6 Image hash found: {filename} and {img_dict[img_hash]}")
+                    else:
+                        img_dict[img_hash] = filename
+                else:
+                    print("Send this image to trash for review")
+                # if file_hash in hash_dict:
+                #     # Duplicate found, print the paths of both files
+                #     dupe_count += 1
+                #     print(f"\033[33m\u25E6 Duplicate found: {filename} and {hash_dict[file_hash]}")
+                # else:
+                #     hash_dict[file_hash] = filename
+                # if cv2_hash in cv2_dict:
+                #     # Duplicate found, print the paths of both files
+                #     dupe_count += 1
+                #     print(f"\033[33m\u25E6 Rotated duplicate found: {filename} and {cv2_hash[file_hash]}")
+                # else:
+                #     cv2_hash[file_hash] = filename
+                #print(f"\033[33m\u25E6 Filename: {filename}\033[0m")
             else:
                 # Open the image and get the original date and time from the EXIF metadata
                 with Image.open(os.path.join(args.directory, filename)) as image:
@@ -223,7 +302,7 @@ def main():
     # Print skipped image count
     print(f"\033[32mTotal Images: {image_total}\033[0m")
     print(f"\033[33mSkipped: {skip_count}\033[0m")
-    print(f"\033[33mDeleted: {dupe_count}\033[0m")
+    print(f"\033[33mDuplicates: {dupe_count}\033[0m")
     print(f"\033[32mTotal Videos: {video_count}\033[0m")
 
 if __name__ == "__main__":
