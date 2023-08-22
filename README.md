@@ -1,9 +1,9 @@
 # ImageAI
 An image (and movie) processor created with the help of AI tools such as [ChatGPT](https://chat.openai.com/) and [CodeGeeX](https://codegeex.cn/en-US) developed in [Visual Studio Code](https://code.visualstudio.com/)
 
-## Background
+## Problem
 
-Generic cloud storage platforms such as [Google Drive](https://drive.google.com/) and [OneDrive](https://onedrive.live.com/) are great for storing and sharing files. However, they are not ideal for organizing photos. Image sharing platforms such as [SmugMug](https://www.smugmug.com/) and [Flickr](https://www.flickr.com/) are great for professional photographers. However, they are expensive and not ideal for personal use.
+Generic cloud storage platforms such as [Google Drive](https://drive.google.com/) and [OneDrive](https://onedrive.live.com/) are great for storing and sharing files. However, they are not ideal for organizing photos. Image sharing platforms such as [SmugMug](https://www.smugmug.com/) and [Flickr](https://www.flickr.com/) cater more for professional photographers. However, they are expensive and not ideal for personal use. A user of Apple devices may find [iCloud](https://www.icloud.com/) convenient initially, however they will eventually run out of space as the top tier plan provides only 2TB. All of these platforms require users to compromise their privacy by sharing their photos with a third party.
 
 ## Solution
 
