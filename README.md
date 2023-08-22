@@ -3,6 +3,12 @@ An image (and movie) processor created with the help of AI tools such as [ChatGP
 
 ## Background
 
+Generic cloud storage platforms such as [Google Drive](https://drive.google.com/) and [OneDrive](https://onedrive.live.com/) are great for storing and sharing files. However, they are not ideal for organizing photos. Image sharing platforms such as [SmugMug](https://www.smugmug.com/) and [Flickr](https://www.flickr.com/) are great for professional photographers. However, they are expensive and not ideal for personal use.
+
+## Solution
+
+After some research I have opted to purchase a personal network attached storage (NAS) device to store my photos. I have found that the [Synology](https://www.synology.com/) NAS devices are easy to use and have a great user interface.
+
 In the process of renaming, sorting, deduplicating and moving tens of thousands of photos from a cloud platform I couldn't find an off the shelf tool which could assist the way I wanted.
 
 To begin I asked ChatGPT the following;
@@ -56,6 +62,8 @@ In this script, the `os` module is used to access and manipulate files and direc
 
 You can modify the script to adjust the file name format or directory path to suit your needs. Additionally, you may want to add error handling or confirmation prompts to ensure that the script renames files correctly and safely.
 
+AI has also helped write much of this document you are now reading, as shown in this screenshot;
+![AI](screenshot.png)
 
 ## Fuctions
 
