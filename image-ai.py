@@ -3,18 +3,26 @@ import cv2
 import hashlib
 import shelve
 import os
+import piexif
+import shutil
 import uuid
 from tqdm import tqdm
 
 parser = argparse.ArgumentParser()
-parser.add_argument("directory", help="the directory containing the photos")
+#parser.add_argument("directory", default='~', help="the directory containing the photos")
 parser.add_argument("-r", "--rebuild", action='store_true', help="empty and rebuild the index database")
 parser.add_argument("-d", "--dedupe", action='store_true', help="dedupe the index database")
+parser.add_argument("-t", "--trash", help="an optional suffix for the trash directoy")
+parser.add_argument("-s", "--source", help="an optional suffix for the source directoy")
 args = parser.parse_args()
 
 # Initialize the local database
-index = os.path.join(os.path.expanduser("~"), 'index')
-db = shelve.open(index)
+index_db = os.path.join(os.path.expanduser("~"), 'index')
+hashmap_db = os.path.join(os.path.expanduser("~"), 'hashmap')
+library = "/Volumes/home/Photos/PhotoLibrary"
+index = shelve.open(index_db)
+hashmap = shelve.open(hashmap_db)
+debug = True
 
 # Function to extract the file extention of a file
 def get_file_extension(filename):
@@ -33,7 +41,7 @@ def compute_hash(file_path):
         print(e)
         return None
 
-# Function to compute the perceptual hash of a file
+# Function to compute the perceptual hash of an image
 def compute_phash(file_path):
     try:
         phash = {}
@@ -55,8 +63,21 @@ def compute_phash(file_path):
         print(e)
         return None
 
+# function to check if an image was taken with a camera
+def is_camera(filename):
+    try:
+        exif_dict = piexif.load(filename)
+        if piexif.ImageIFD.Make in exif_dict['0th'] and piexif.ImageIFD.Model in exif_dict['0th']:
+            return True
+        else:
+            print(exif_dict)
+            return False
+    except Exception as e:
+        print(f"Error loading EXIF data: {e}")
+        return False
+
 def rebuild_index(directory):
-    db.clear()
+    index.clear()
     # Iterate through directories and files recursively and exclude hidden
     file_count = sum(len([f for f in files if not f[0] == '.']) for _, _, files in os.walk(directory))
     with tqdm(total=file_count, ncols=100) as pbar:
@@ -74,7 +95,7 @@ def rebuild_index(directory):
                     file_phash = None
                 try:
                     # Store file information in the local database
-                    db[file_uuid] = {
+                    index[file_uuid] = {
                         'filename': filename,
                         'extension': file_ext,
                         'path': file_path,
@@ -87,25 +108,85 @@ def rebuild_index(directory):
 def dedupe_index():
     dd = {}
     # Check for duplicate files by using the hash as the key
-    for key, value in db.items():
+    for key, value in index.items():
         dd_key = value['hash']
         dd_value = key
         if dd_key in dd:
             print("--")
-            print("A: " + str(db.get(dd[dd_key])['path']))
-            print("B: " + str(db.get(key)['path']))
+            print("A: " + str(index.get(dd[dd_key])['path']))
+            print("B: " + str(index.get(key)['path']))
             print("--")
             print("Enter A/B to delete or any other key to ignore")
             user_input = input("> ")
             if (user_input == "A" or user_input == "a"):
-                del db[dd[dd_key]]
+                del index[dd[dd_key]]
             elif (user_input == "B" or user_input == "b"):
-                del db[key]
+                del index[key]
             else:
                 print("Ignoring")
         else:
             dd[dd_key] = dd_value
 
+def hashmap_index():
+    # Create a map of file hashes
+    print("├ Total Index Count: " + str(len(index.keys())))
+    if debug == True:
+        print("└─ // DEBUG")
+        print(next(iter(index.items())))
+        print("┌─")
+    hashmap.clear()
+    dupe_count = 0
+    for key, value in index.items():
+        hashmap_key = value['hash']
+        hashmap_value = key
+        if hashmap_key in hashmap:
+            dupe_count += 1
+        else:
+            hashmap[hashmap_key] = hashmap_value
+    if debug == True:
+        print("└─ // DEBUG")
+        print(next(iter(hashmap.items())))
+        print("┌─")
+    print("├ Duplicate Index File Hashes: " + str(dupe_count))
+    # Create a map of perceptual hashes
+    hashmap.clear()
+    dupe_count = 0
+    for key, value in index.items():
+        if not value['phash'] == None:
+            for phash_key, phash_value in value['phash'].items():
+                hashmap_key = str(phash_value)
+                hashmap_value = str(key)
+                if hashmap_key in hashmap:
+                    dupe_count += 1
+                else:
+                    hashmap[hashmap_key] = hashmap_value
+
+    if debug == True:
+        print("└─ // DEBUG")
+        print(next(iter(hashmap.items())))
+        print("┌─")
+    print("├ Duplicate Perceptual Hashes: " + str(dupe_count))
+
+
+def dedupe_source(directory):
+    file_count = sum(len([f for f in files if not f[0] == '.']) for _, _, files in os.walk(directory))
+    for root, _, files in os.walk(directory):
+        files = [f for f in files if not f[0] == '.']
+        for filename in files:
+            file_path = os.path.join(root, filename)
+            file_hash = compute_hash(file_path)
+            print(file_hash)
+
+def detect_trash():
+    item_count = len(index.items())
+    with tqdm(total=item_count, ncols=100) as pbar:
+        for key, value in index.items():
+            pbar.update(1)
+            #print(value['path'])
+            if not is_camera(value['path']):
+                src = value['path']
+                dst = args.trash
+                shutil.move(src, dst)
 
 def main():
     os.system('clear')
@@ -118,20 +199,32 @@ def main():
     print("S:::S S:::S       SSSSS S:::S SSSSS S:::S`sSSs. S:::SSSS         S:::S SSSSS S:::S")
     print("S;;;S S;;;S       SSSSS S;;;S SSSSS S;;;S SSSSS S;;;S            S;;;S SSSSS S;;;S")
     print("S%%%S S%%%S       SSSSS S%%%S SSSSS S%%%S SSSSS S%%%S SSSSS      S%%%S SSSSS S%%%S")
-    print("SSSSS SSSSS       SSSSS SSSSS SSSSS SSSSSsSSSSS SSSSSsSS;:'      SSSSS SSSSS SSSSS")
-    print("v0.01")
-    print("")
+    print("SSSSS SSSSS       SSSSS SSSSS SSSSS SSSSSsSSSSS SSSSSsSS;:'      SSSSS SSSSS SSSSS v0.01")
+    print("┌─────────────────────────────────────────────────────────────────────────────────")
     # Directory containing the files
-    directory = args.directory
+    directory = library
+    # Directory to move files from
+    source = args.source
     if args.rebuild:
         rebuild_index(directory)
+        print("")
     else:
-        print("no rebuild")
+        print("├ Rebuild Index? No")
     if args.dedupe:
         dedupe_index()
     else:
-        print("no dedupe")
+        print("├ Detect Duplicates? No")
+    if args.source:
+        hashmap_index()
+        dedupe_source(source)
+    else:
+        print("├ Import Source? No")
+    # if args.trash:
+    #     detect_trash()
+    # else:
+    #     print("Detect Trash? No")
 
 if __name__ == '__main__':
     main()
-    db.close()
+    index.close()
+    hashmap.close()
