@@ -3,13 +3,29 @@ An image (and movie) processor developed in [Visual Studio Code](https://code.vi
 
 ## Problem
 
-Generic cloud storage platforms such as [Google Drive](https://drive.google.com/) and [OneDrive](https://onedrive.live.com/) are great for storing and sharing files. However, they are not ideal for organizing photos. Image sharing platforms such as [SmugMug](https://www.smugmug.com/) and [Flickr](https://www.flickr.com/) cater more for professional photographers. However, they are expensive and not ideal for personal use. A user of Apple devices may find [iCloud](https://www.icloud.com/) convenient initially, however they will eventually run out of space as the top tier plan provides only 2TB. All of these platforms require users to compromise their privacy by sharing their photos with a third party.
+Generic cloud storage platforms such as [Google Drive](https://drive.google.com/) and [OneDrive](https://onedrive.live.com/) are great for storing and sharing files. However, they are not ideal for organizing photos. Image sharing platforms such as [SmugMug](https://www.smugmug.com/) and [Flickr](https://www.flickr.com/) cater more for professional photographers. However, they are expensive and not ideal for personal use. A user of Apple devices may find [iCloud](https://www.icloud.com/) convenient initially. However, they will eventually run out of space as even the top tier plan provides only 2TB. All of these platforms require users to compromise their privacy by sharing their photos with a third party.
 
 ## Solution
 
-In the process of moving tens of thousands of photos from an expensive cloud platform I couldn't find an off the shelf tool which could assist the way I wanted. After some research I opted to purchase a personal network attached storage (NAS) device to store my photos. I have found that the [Synology](https://www.synology.com/) NAS devices are easy to use and have a great user interface. This device includes the [Synology Photos](https://www.synology.com/en-global/dsm/feature/photos) application which has some very useful features which results in total control and privacy for all my images.
+After some research I opted to purchase a personal network attached storage (NAS) device to store my photos. I have found that the [Synology](https://www.synology.com/) NAS devices are easy to use and have a great user interface. This device includes the [Synology Photos](https://www.synology.com/en-global/dsm/feature/photos) application which has some very useful features which results in total control and privacy for all my images.
 
-The challenge remains how to rename, sort and deduplicate thousands of photos. I have opted to use a [Python](https://www.python.org) script to automate this process. Like many people I have photos from multiple devices over many years, digital cameras, social media, and mobile phones. The script will sort the photos into folders based on the date they were taken. It will also rename the photos to a standard format.
+The challenge remains how to rename, sort and deduplicate thousands of photos. I have opted to use a [Python](https://www.python.org) script to automate this process. Like many people I have photos from multiple devices over many years, film, digital cameras, social media, and ubiquitous mobile phones. The script will sort the photos into folders based on the date they were taken. It will also rename the photos to a standard format.
+
+## Financial Analysis
+
+The cost (in May 2023) for a Synology 2-bay DS220j and 2 x Seagate IronWolf 10TB disks was approx. USD$550 and yields ~9.1TB usable space using Synology Hybrid RAID (SHR)[https://kb.synology.com/vi-vn/DSM/tutorial/What_is_Synology_Hybrid_RAID_SHR]
+
+In comparison to the cloud storage providers the table below shows approximiate annual cost for the services mentioned above
+
+| Service            | Storage  | Annual Cost
+| :----------------- | :------: | ------: |
+| Google Drive       |   2 TB   | $80     |
+| Microsoft 365      |   1 TB   | $50     | 
+| SmugMug            |    ∞     | $121    |
+| Flickr Pro         |    ∞     | $72     |
+| Apple iCloud+      |   2 TB   | $132    |
+
+It should be noted these platforms do provide other features besides storage, although in my experience other problems emerge if they are reach capacity. Even those offering "unlimited" storage can be slow to upload or download large batches of files and maybe time consuming to organise. A locally connected NAS device is fast and can be expanded as required.
 
 ## Artifical Intelligence
 
@@ -68,13 +84,32 @@ AI is also helping to write the document you are now reading!
 
 ![AI](screenshot.png)
 
-## Fuctions
+## Functions
 
 - Build an index database for all files in the photo library folder
 - Iterate through a source directory and rename to the desired format
 - Handle duplicate filename by appending a suffix
 - Move files to a destination directory for further processing
 - Compare image metadata to detect and remove duplicates
+
+## Naming Convention
+
+Synology Photos creates the following folder structure and can automatically sort images into the year and month the photo was taken. If the image has no EXIF data it will use the file creation date instead.
+
+    PhotoLibrary
+    ├── YYYY
+    │   ├── MM
+    │   ├── MM
+    │   └── ...
+    ├── YYYY
+    │   ├── MM
+    │   ├── MM
+    │   └── ...
+    └── ...
+
+The script renames files to the following convention, with an optional suffix if there is a conflict
+
+    YYYYY-MM-DD_HHMMSS.JPG
 
 ## Usage
 
